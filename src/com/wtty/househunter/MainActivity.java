@@ -2,10 +2,14 @@ package com.wtty.househunter;
 
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NavUtils;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,8 +19,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 public class MainActivity extends FragmentActivity implements
-		ActionBar.TabListener {
-
+		ActionBar.TabListener, PropertyListFragment.PropertyListener {
+	
+	Context _context;
 	/**
 	 * The serialization (saved instance state) Bundle key representing the
 	 * current tab position.
@@ -27,6 +32,8 @@ public class MainActivity extends FragmentActivity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		
+		_context = this;
 
 		// Set up the action bar to show tabs.
 		final ActionBar actionBar = getActionBar();
@@ -36,8 +43,6 @@ public class MainActivity extends FragmentActivity implements
 		actionBar.addTab(actionBar.newTab().setText(R.string.title_section1)
 				.setTabListener(this));
 		actionBar.addTab(actionBar.newTab().setText(R.string.title_section2)
-				.setTabListener(this));
-		actionBar.addTab(actionBar.newTab().setText(R.string.title_section3)
 				.setTabListener(this));
 	}
 
@@ -69,11 +74,28 @@ public class MainActivity extends FragmentActivity implements
 			FragmentTransaction fragmentTransaction) {
 		// When the given tab is selected, show the tab contents in the
 		// container view.
-		Fragment fragment = new DummySectionFragment();
+		
 		Bundle args = new Bundle();
-		args.putInt(DummySectionFragment.ARG_SECTION_NUMBER,
-				tab.getPosition() + 1);
-		fragment.setArguments(args);
+		Fragment fragment;
+		switch (tab.getPosition()) {
+		case 0:
+			fragment = new PropertyListFragment();
+			break;
+
+		default	:
+			ContentValues values = new ContentValues();
+			values.put(PropertyDB.KEY_ADDRESS, "3606 NW 84th Ave, Coral Springs, FL 33065");
+			values.put(PropertyDB.KEY_NOTES, "Looks very promising");
+			
+			getContentResolver().insert(PropertyProvider.CONTENT_URI, values);
+			
+			fragment = new DummySectionFragment();
+			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER,
+					tab.getPosition() + 1);
+			fragment.setArguments(args);
+			break;
+		}
+		
 		getSupportFragmentManager().beginTransaction()
 				.replace(R.id.container, fragment).commit();
 	}
@@ -109,10 +131,19 @@ public class MainActivity extends FragmentActivity implements
 			// number argument value.
 			TextView textView = new TextView(getActivity());
 			textView.setGravity(Gravity.CENTER);
-			textView.setText(Integer.toString(getArguments().getInt(
-					ARG_SECTION_NUMBER)));
+			textView.setText("Coming Soon");
 			return textView;
 		}
+	}
+
+	@Override
+	public void onSelection(long data) {
+		// TODO Auto-generated method stub
+		Intent _propertyActivity = new Intent(_context, PropertyActivity.class);
+		_propertyActivity.putExtra("_id", data);
+		Log.i("TRACE", "popping property intent");
+		
+		startActivityForResult(_propertyActivity, 0);
 	}
 
 }
