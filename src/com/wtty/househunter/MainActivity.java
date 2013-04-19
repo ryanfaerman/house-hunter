@@ -1,5 +1,7 @@
 package com.wtty.househunter;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.ActionBar;
 import android.app.FragmentTransaction;
 import android.content.ContentValues;
@@ -44,6 +46,11 @@ public class MainActivity extends FragmentActivity implements
 				.setTabListener(this));
 		actionBar.addTab(actionBar.newTab().setText(R.string.title_section2)
 				.setTabListener(this));
+		
+		AccountManager manager = (AccountManager) getSystemService(ACCOUNT_SERVICE);
+		Account[] list = manager.getAccounts();
+		
+		Log.i("TRACE", list[0].name);
 	}
 
 	@Override
@@ -88,6 +95,8 @@ public class MainActivity extends FragmentActivity implements
 			values.put(PropertyDB.KEY_NOTES, "Looks very promising");
 			
 			getContentResolver().insert(PropertyProvider.CONTENT_URI, values);
+			
+			
 			
 			fragment = new DummySectionFragment();
 			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER,
