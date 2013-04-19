@@ -29,7 +29,7 @@
 	        android:gravity="right"
 	        android:paddingRight="10dp"/>
 		    
-		    <EditText 
+		    <EditText android:id="@+id/property_bedrooms"
 	        android:text="4"
 	        android:layout_width="0dp"
 	        android:layout_height="wrap_content"
@@ -46,7 +46,7 @@
 	        android:gravity="right"
 	        android:paddingRight="10dp"/>
 		    
-		    <EditText 
+		    <EditText android:id="@+id/property_bathrooms"
 	        android:text="2"
 	        android:layout_width="0dp"
 	        android:layout_height="wrap_content"
@@ -72,7 +72,7 @@
 	        android:gravity="right"
 	        android:paddingRight="10dp"/>
 		    
-		    <EditText 
+		    <EditText android:id="@+id/property_sqft"
 	        android:text="2150"
 	        android:layout_width="0dp"
 	        android:layout_height="wrap_content"
