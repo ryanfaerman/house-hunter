@@ -93,11 +93,11 @@ public class MainActivity extends FragmentActivity implements
 			ContentValues values = new ContentValues();
 			values.put(PropertyDB.KEY_ADDRESS, "3606 NW 84th Ave, Coral Springs, FL 33065");
 			values.put(PropertyDB.KEY_NOTES, "Looks very promising");
+			values.put(PropertyDB.KEY_POOL, "y");
+			values.put(PropertyDB.KEY_SQFT, "2134");
 			
 			getContentResolver().insert(PropertyProvider.CONTENT_URI, values);
-			
-			
-			
+
 			fragment = new DummySectionFragment();
 			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER,
 					tab.getPosition() + 1);
