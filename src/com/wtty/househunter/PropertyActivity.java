@@ -1,10 +1,17 @@
 package com.wtty.househunter;
 
+import java.io.IOException;
+import java.util.List;
+
 import android.R.bool;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,8 +23,8 @@ public class PropertyActivity extends Activity {
 	Context _context;
 	String _address;
 	String _notes;
-	String _lat;
-	String _long;
+	String _latitude;
+	String _longitude;
 	String _sqft;
 	String _bedrooms;
 	String _bathrooms;
@@ -37,23 +44,26 @@ public class PropertyActivity extends Activity {
 	CheckBox _property_hoa;
 	EditText _property_state;
 	
+	Boolean _new_property = false;
+	long _id = 0;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_property);
 		_context = this;
-		Log.i("PROPERTYACTIVITY", "hola");
-		long id = getIntent().getLongExtra("_id", 0);
+		Log.i("TRACE", "hola");
+		_id = getIntent().getLongExtra("_id", 0);
 		
-		_where_clause = "_id='"+id+"'";
 		
-		Log.i("PROPERTYACTIVITY", String.valueOf(id));
-		setTitle("Hello there tiny timmy!");
 		
-//		_property_address = (EditText) findViewById(R.id.property_address);
+		Log.i("TRACE", String.valueOf(_id));
+		setTitle("New Property");
+		
+		_property_address = (EditText) findViewById(R.id.property_address);
 		_property_notes = (EditText) findViewById(R.id.property_notes);
-//		_property_lat = (EditText) findViewById(R.id.property_lat);
-//		_property_long = (EditText) findViewById(R.id.property_long);
+//		_property_lat = (EditText) findViewById(R.id.property_latitude);
+//		_property_long = (EditText) findViewById(R.id.property_longitude);
 		_property_sqft = (EditText) findViewById(R.id.property_sqft);
 		_property_bedrooms = (EditText) findViewById(R.id.property_bedrooms);
 		_property_bathrooms = (EditText) findViewById(R.id.property_bathrooms);
@@ -61,10 +71,16 @@ public class PropertyActivity extends Activity {
 		_property_hoa = (CheckBox) findViewById(R.id.property_hoa);
 //		_property_state = (EditText) findViewById(R.id.property_state);
 		
-		load_data();
+		_new_property = (_id == 0);
 		
-		findViewById(R.id.cancel_button).setOnClickListener(cancelClickListener);
+		if(!_new_property) {
+			load_data();
+			findViewById(R.id.map_button).setVisibility(View.VISIBLE);
+		}
+		
+//		findViewById(R.id.cancel_button).setOnClickListener(cancelClickListener);
 		findViewById(R.id.save_button).setOnClickListener(saveClickListener);
+		findViewById(R.id.map_button).setOnClickListener(mapClickListener);
 		
 	};
 	
@@ -77,14 +93,54 @@ public class PropertyActivity extends Activity {
 		}
 	};
 	
+	View.OnClickListener mapClickListener = new View.OnClickListener() {
+		
+		@Override
+		public void onClick(View v) {
+			Log.i("TRACE", "mapping property");
+			
+			Geocoder _geocoder = new Geocoder(_context);
+			
+			if (!Geocoder.isPresent()){
+				Log.i("B0RKED", "no geocoder - returning");
+				return;
+			}
+			
+			
+			
+			
+			if(_latitude == null || _longitude == null || _latitude.isEmpty() || _longitude.isEmpty()) {
+				try {
+					List<Address> result = _geocoder.getFromLocationName(_address, 1);
+					if ((result == null)||(result.isEmpty())){	
+						Log.i("B0RKED", "nothing found - returning");
+						return;
+					} else {
+						_latitude = String.valueOf(result.get(0).getLatitude());
+						_longitude = String.valueOf(result.get(0).getLongitude());
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					Log.i("B0RKED", "exeception so returning");
+					return;
+				}
+			}
+			Log.i("w3rkz", "geo: "+ _latitude + "," + _longitude);
+			String uri = "geo:"+ _latitude + "," + _longitude + "?q="+_address;
+			startActivity(new Intent(android.content.Intent.ACTION_VIEW, Uri.parse(uri)));
+		}
+	};
+	
 	View.OnClickListener saveClickListener = new View.OnClickListener() {
 		
 		@Override
 		public void onClick(View v) {
+			_where_clause = "_id='"+_id+"'";
 			Log.i("TRACE", "saving quote");
 			ContentValues values = new ContentValues();
 			
-//			values.put(PropertyDB.KEY_ADDRESS, _property_address.getText().toString());
+			values.put(PropertyDB.KEY_ADDRESS, _property_address.getText().toString());
 			values.put(PropertyDB.KEY_NOTES, _property_notes.getText().toString());
 //			values.put(PropertyDB.KEY_LAT, _property_lat.getText().toString());
 //			values.put(PropertyDB.KEY_LONG, _property_long.getText().toString());
@@ -107,7 +163,16 @@ public class PropertyActivity extends Activity {
 			values.put(PropertyDB.KEY_HOA, has_hoa);
 //			values.put(PropertyDB.KEY_STATE, _property_state.getText().toString());
 			
-			getContentResolver().update(PropertyProvider.CONTENT_URI, values, _where_clause, null);
+			if(_new_property) {
+				Uri new_record = getContentResolver().insert(PropertyProvider.CONTENT_URI, values);
+				_id = Long.valueOf(new_record.getPathSegments().get(1));
+				_new_property = false;
+				_where_clause = "_id='"+_id+"'";
+				findViewById(R.id.map_button).setVisibility(View.VISIBLE);
+			} else {
+				getContentResolver().update(PropertyProvider.CONTENT_URI, values, _where_clause, null);
+			}
+			
 			
 			load_data();
 			
@@ -151,8 +216,8 @@ public class PropertyActivity extends Activity {
 	            	Log.i("TRACE", String.valueOf(sqft_column));
 	            	_address = cur.getString(address_column);
 	            	_notes = cur.getString(notes_column);
-	            	_lat = cur.getString(lat_column);
-	            	_long = cur.getString(long_column);
+	            	_latitude = cur.getString(lat_column);
+	            	_longitude = cur.getString(long_column);
 	            	_sqft = cur.getString(sqft_column);
 	            	_bedrooms = cur.getString(bedrooms_column);
 	            	_bathrooms = cur.getString(bathrooms_column);
@@ -169,7 +234,7 @@ public class PropertyActivity extends Activity {
 	
 	void populate_fields() {
 
-//		_property_address.setText(_address);
+		_property_address.setText(_address);
 		_property_notes.setText(_notes);
 //		_property_lat.setText(_lat);
 //		_property_long.setText(_long);
@@ -183,5 +248,11 @@ public class PropertyActivity extends Activity {
 		_property_hoa.setChecked(has_hoa);
 //		_property_state.setText(_state);
 		
+	}
+	
+	@Override
+	public void onDestroy() {
+		Log.i("TRACE", "destroying property activity");
+		super.onDestroy();
 	}
 }
