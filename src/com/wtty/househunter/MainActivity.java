@@ -1,5 +1,8 @@
 package com.wtty.househunter;
 
+import java.io.IOException;
+import java.util.List;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.ActionBar;
@@ -7,10 +10,13 @@ import android.app.FragmentTransaction;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.location.Address;
+import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -24,6 +30,9 @@ public class MainActivity extends FragmentActivity implements
 		ActionBar.TabListener, PropertyListFragment.PropertyListener {
 	
 	Context _context;
+	String _where_clause;
+	String _order_clause;
+	PropertyListFragment _propertyFragment;
 	/**
 	 * The serialization (saved instance state) Bundle key representing the
 	 * current tab position.
@@ -36,6 +45,7 @@ public class MainActivity extends FragmentActivity implements
 		setContentView(R.layout.activity_main);
 		
 		_context = this;
+		
 
 		// Set up the action bar to show tabs.
 		final ActionBar actionBar = getActionBar();
@@ -75,6 +85,70 @@ public class MainActivity extends FragmentActivity implements
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
 	}
+	
+	public void appendWhereClause(String clause) {
+		if(_where_clause == null) {
+			_where_clause = "";
+		}
+		if(!_where_clause.isEmpty()) {
+			_where_clause += " AND ";
+		}
+		
+		_where_clause += clause;
+	}
+	
+	public void appendOrderClause(String clause) {
+		if(_order_clause == null) {
+			_order_clause = "";
+		}
+		if(!_order_clause.isEmpty()) {
+			_order_clause += ", ";
+		}
+		
+		_order_clause += clause;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    // Handle item selection
+		
+	    switch (item.getItemId()) {
+	        case R.id.show_all:
+	        	_where_clause = "";
+	    		_order_clause = "";
+	            break;
+	        case R.id.add_property:
+	        	onSelection(0);
+	        	break;
+	        case R.id.sort_date_desc:
+	        	_order_clause = PropertyDB.KEY_ROWID+" DESC";
+	            break;
+	        case R.id.sort_date_asc:
+	        	_order_clause = PropertyDB.KEY_ROWID+" ASC";
+	            break;
+	        case R.id.filter_has_hoa:
+	            appendWhereClause(PropertyDB.KEY_HOA+"='y'");
+	            break;
+	        case R.id.filter_hasnt_hoa:
+	        	appendWhereClause(PropertyDB.KEY_HOA+"=='n' OR "+PropertyDB.KEY_HOA+" IS NULL");
+	            break;
+	        case R.id.filter_has_pool:
+	        	appendWhereClause(PropertyDB.KEY_POOL+"='y'");
+	            break;
+	        case R.id.filter_hasnt_pool:
+	        	appendWhereClause(PropertyDB.KEY_POOL+"=='n' OR "+PropertyDB.KEY_POOL+" IS NULL");
+	            break;
+	            
+	        default:
+	            return super.onOptionsItemSelected(item);
+	    }
+
+	    if(_propertyFragment != null) {
+	    	_propertyFragment.refreshList(_where_clause, _order_clause);
+	    }
+		
+	    return true;
+	}
 
 	@Override
 	public void onTabSelected(ActionBar.Tab tab,
@@ -86,9 +160,18 @@ public class MainActivity extends FragmentActivity implements
 		Fragment fragment;
 		switch (tab.getPosition()) {
 		case 0:
-			fragment = new PropertyListFragment();
+			_propertyFragment = new PropertyListFragment();
+			fragment = 	_propertyFragment;
+			PropertyListFragment.setmyText("HELLO WORLD");
 			break;
-
+		
+		case 1:
+			String latitude = "26.269724";
+			String longitude = "-80.246065";
+			String address = "3211 NW 89th Way, Coral Springs, FL 33065";
+			String uri = "geo:"+ latitude + "," + longitude + "?q="+address;
+			startActivity(new Intent(android.content.Intent.ACTION_VIEW, Uri.parse(uri)));
+			
 		default	:
 			ContentValues values = new ContentValues();
 			values.put(PropertyDB.KEY_ADDRESS, "3606 NW 84th Ave, Coral Springs, FL 33065");
@@ -147,12 +230,75 @@ public class MainActivity extends FragmentActivity implements
 
 	@Override
 	public void onSelection(long data) {
-		// TODO Auto-generated method stub
 		Intent _propertyActivity = new Intent(_context, PropertyActivity.class);
 		_propertyActivity.putExtra("_id", data);
 		Log.i("TRACE", "popping property intent");
 		
 		startActivityForResult(_propertyActivity, 0);
+	}
+
+	@Override
+	public void onLongSelection(long id) {
+		Geocoder _geocoder = new Geocoder(_context);
+		
+		if (!Geocoder.isPresent()){
+			Log.i("B0RKED", "no geocoder - returning");
+			return;
+		}
+		
+		String _where_clause = "_id='"+id+"'";
+		String[] projection = new String[] {
+				PropertyDB.KEY_ADDRESS,
+				PropertyDB.KEY_LAT,
+				PropertyDB.KEY_LONG,
+	        };
+		
+		String latitude = "26.269724";
+		String longitude = "-80.246065";
+		String address = "3211 NW 89th Way, Coral Springs, FL 33065";
+		
+		Cursor cur = getContentResolver().query(PropertyProvider.CONTENT_URI, projection, _where_clause, null, null);
+		
+		if (cur.moveToFirst()) {
+        	Log.i("TRACE", "moved to first");
+        	
+        	int address_column = cur.getColumnIndex(PropertyDB.KEY_ADDRESS);
+        	int lat_column = cur.getColumnIndex(PropertyDB.KEY_LAT);
+        	int long_column = cur.getColumnIndex(PropertyDB.KEY_LONG);
+        	
+            do {
+                // Get the field values
+            	address = cur.getString(address_column);
+            	latitude = cur.getString(lat_column);
+            	longitude = cur.getString(long_column);
+ 
+            } while (cur.moveToNext());
+
+        }
+		
+		
+		
+		if(latitude == null || longitude == null || latitude.isEmpty() || longitude.isEmpty()) {
+			try {
+				List<Address> result = _geocoder.getFromLocationName(address, 1);
+				if ((result == null)||(result.isEmpty())){	
+					Log.i("B0RKED", "nothing found - returning");
+					return;
+				} else {
+					latitude = String.valueOf(result.get(0).getLatitude());
+					longitude = String.valueOf(result.get(0).getLongitude());
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				Log.i("B0RKED", "exeception so returning");
+				return;
+			}
+		}
+		Log.i("w3rkz", "geo: "+ latitude + "," + longitude);
+		String uri = "geo:"+ latitude + "," + longitude + "?q="+address;
+		startActivity(new Intent(android.content.Intent.ACTION_VIEW, Uri.parse(uri)));
+		
 	}
 
 }

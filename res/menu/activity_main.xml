@@ -1,14 +1,43 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-
+		<item
+        android:id="@+id/add_property"
+        android:title="Add Property"
+        android:showAsAction="ifRoom|withText"/>
     <item
-        android:id="@+id/menu_settings"
+        android:id="@+id/show_all"
         android:orderInCategory="100"
         android:showAsAction="never"
         android:title="Show All"/>
     <item
-        android:id="@+id/menu_letter_test"
-        android:title="Sort by Date"
+        android:id="@+id/sort_date_desc"
+        android:title="Newest First"
         android:showAsAction="never"
         />
+   	 <item
+        android:id="@+id/sort_date_asc"
+        android:title="Oldest First"
+        android:showAsAction="never"
+        />
+   	 <item
+        android:id="@+id/filter_has_hoa"
+        android:title="Has HOA"
+        android:showAsAction="never"
+        />
+   	 <item
+        android:id="@+id/filter_hasnt_hoa"
+        android:title="No HOA"
+        android:showAsAction="never"
+        />
+   	 <item
+        android:id="@+id/filter_has_pool"
+        android:title="Has Pool"
+        android:showAsAction="never"
+        />
+   	 <item
+        android:id="@+id/filter_hasnt_pool"
+        android:title="No Pool"
+        android:showAsAction="never"
+        />
+   		
 
 </menu>
