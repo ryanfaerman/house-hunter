@@ -4,13 +4,22 @@
     android:layout_height="match_parent"
     android:orientation="vertical" >
     
+    <EditText android:id="@+id/property_address"
+		    android:layout_width="match_parent"
+		    android:lines="2"
+		    android:gravity="top|left"
+		    android:layout_height="wrap_content"
+		    android:paddingTop="10dp"
+		    android:paddingBottom="10dp"
+		    android:hint="Address"/>
+    
 		<EditText android:id="@+id/property_notes"
 		    android:layout_width="match_parent"
 		    android:lines="10"
 		    android:gravity="top|left"
-		    android:layout_height="200dp"
+		    android:layout_height="150dp"
 		    android:paddingTop="10dp"
-		    android:hint="This property is awesome!"/>
+		    android:hint="Notes"/>
 		
 		<LinearLayout
         android:layout_width="match_parent"
@@ -30,7 +39,7 @@
 	        android:paddingRight="10dp"/>
 		    
 		    <EditText android:id="@+id/property_bedrooms"
-	        android:text="4"
+	        android:hint="4"
 	        android:layout_width="0dp"
 	        android:layout_height="wrap_content"
 	        android:layout_weight="1"
@@ -47,7 +56,7 @@
 	        android:paddingRight="10dp"/>
 		    
 		    <EditText android:id="@+id/property_bathrooms"
-	        android:text="2"
+	        android:hint="2"
 	        android:layout_width="0dp"
 	        android:layout_height="wrap_content"
 	        android:layout_weight="1"
@@ -73,7 +82,7 @@
 	        android:paddingRight="10dp"/>
 		    
 		    <EditText android:id="@+id/property_sqft"
-	        android:text="2150"
+	        android:hint="2150"
 	        android:layout_width="0dp"
 	        android:layout_height="wrap_content"
 	        android:layout_weight="2"
@@ -134,11 +143,17 @@
            android:layout_weight="1"
            android:text="Save" />
 		    
-		    <Button android:id="@+id/cancel_button"
+		    <!-- <Button android:id="@+id/cancel_button"
            android:layout_width="0dp"
            android:layout_height="wrap_content"
            android:layout_weight="1"
-           android:text="Cancel" />
+           android:text="Cancel" /> -->
+		    <Button android:id="@+id/map_button"
+           android:layout_width="0dp"
+           android:layout_height="wrap_content"
+           android:layout_weight="1"
+           android:text="Map" 
+           android:visibility="gone"/>
 		   
             
 
