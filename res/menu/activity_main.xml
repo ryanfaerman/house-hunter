@@ -7,37 +7,23 @@
         android:id="@+id/show_all"
         android:orderInCategory="100"
         android:showAsAction="never"
-        android:title="Show All"/>
+        android:title="Clear Filters"/>
     <item
-        android:id="@+id/sort_date_desc"
+        android:id="@+id/sort_date"
         android:title="Newest First"
-        android:showAsAction="never"
-        />
-   	 <item
-        android:id="@+id/sort_date_asc"
-        android:title="Oldest First"
         android:showAsAction="never"
         />
    	 <item
         android:id="@+id/filter_has_hoa"
         android:title="Has HOA"
         android:showAsAction="never"
-        />
-   	 <item
-        android:id="@+id/filter_hasnt_hoa"
-        android:title="No HOA"
-        android:showAsAction="never"
+        android:checkable="true"
         />
    	 <item
         android:id="@+id/filter_has_pool"
         android:title="Has Pool"
         android:showAsAction="never"
+        android:checkable="true"
         />
-   	 <item
-        android:id="@+id/filter_hasnt_pool"
-        android:title="No Pool"
-        android:showAsAction="never"
-        />
-   		
 
 </menu>

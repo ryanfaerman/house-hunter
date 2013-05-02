@@ -91,13 +91,16 @@ public class PropertyListFragment extends Fragment {
 		Cursor _cursor = getProperties();
 		Log.i("TRACE", "got properties - swapping cursors");
 //		getActivity().startManagingCursor(_cursor);
+		if(_cursor == null) {
+			Log.i("TRACE", "NULL BITCHES");
+		}
 		_cursorAdapter.swapCursor(_cursor);
 //		_propertyList.setAdapter(_cursorAdapter);
 		Log.i("TRACE", "done swapping and refreshing");
 	}
 	
 	private Cursor getProperties() {
-		Log.i("TRACE", "prepping query");
+		Log.i("TRACE", "prepping query "+_where_clause+" by "+_order_clause);
 		String[] projection = new String[] {
 			PropertyDB.KEY_ROWID,
 			PropertyDB.KEY_ADDRESS
