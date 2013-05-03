@@ -10,8 +10,9 @@ All base functionality is complete.
  * Adding Properties
  * Map View Intent
  * Landscape interfaces
- * Filtering & Sorting
- * Long touch on listview jumps to map
+ * Filtering & Sorting, these are properly toggelable
+ * Long touch on listview deletes with a confirmation
+ * Zillow Integration
 
 ## Usage Guidelines
 
@@ -19,4 +20,5 @@ Please use it as you would normally use any other app. The map tab on the main s
 
 ## Changes from RFP
  * Maps are no longer embedded
+ * Tabs are not used as they have no immediate purpose.
 
