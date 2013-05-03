@@ -1,22 +1,42 @@
 package com.wtty.househunter;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import android.R.bool;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Messenger;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class PropertyActivity extends Activity {
@@ -43,6 +63,7 @@ public class PropertyActivity extends Activity {
 	CheckBox _property_pool;
 	CheckBox _property_hoa;
 	EditText _property_state;
+	Messenger _messenger;
 	
 	Boolean _new_property = false;
 	long _id = 0;
@@ -73,9 +94,12 @@ public class PropertyActivity extends Activity {
 		
 		_new_property = (_id == 0);
 		
+		
 		if(!_new_property) {
 			load_data();
 			findViewById(R.id.map_button).setVisibility(View.VISIBLE);
+		} else {
+			dialog();
 		}
 		
 //		findViewById(R.id.cancel_button).setOnClickListener(cancelClickListener);
@@ -255,4 +279,181 @@ public class PropertyActivity extends Activity {
 		Log.i("TRACE", "destroying property activity");
 		super.onDestroy();
 	}
+	
+	
+	
+	public void dialog() {
+		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+		alert.setTitle("New Property");
+		alert.setMessage("What is the address?");
+
+		// Set an EditText view to get user input 
+
+		LinearLayout lila1= new LinearLayout(this);
+		lila1.setOrientation(1); //1 is for vertical orientation
+		
+		final EditText address_input = new EditText(this);
+		address_input.setHint("Street Address");
+		
+		final EditText citystatezip_input = new EditText(this);
+		citystatezip_input.setHint("City, State Zip");
+		
+		lila1.addView(address_input);
+		lila1.addView(citystatezip_input);
+		alert.setView(lila1);
+
+		alert.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+		public void onClick(DialogInterface dialog, int whichButton) {
+		  String address = address_input.getText().toString();
+		  String citystatezip = citystatezip_input.getText().toString();
+		  
+		  ((EditText) findViewById(R.id.property_address)).setText(address + ", "+citystatezip);
+		  
+		  Log.i("TRACE", "PLEASE HELP ME");
+		  // Do something with value!
+		  	String clean_address = "";
+		  	String clean_citystatezip = "";
+		  	try {
+		  		clean_address= URLEncoder.encode(address, "UTF-8");
+		  		clean_citystatezip= URLEncoder.encode(citystatezip, "UTF-8");
+		  		
+		  		try {
+					ZillowRequest sr = new ZillowRequest();
+					sr.execute(new URL("http://www.zillow.com/webservice/GetSearchResults.htm?zws-id=X1-ZWz1djyaxz82dn_86zet&address="+clean_address+"&citystatezip="+clean_citystatezip));
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} catch (Exception e) {
+				Log.e("BAD URL", "ENCODING PROBLEM");
+			}
+		  	
+		  }
+		});
+
+		alert.setNegativeButton("No", new DialogInterface.OnClickListener() {
+		  public void onClick(DialogInterface dialog, int whichButton) {
+		    // Canceled.
+		  }
+		});
+
+		alert.show();
+	}
+	
+	public static String get(URL url) {
+	    String response = "";
+	    Log.i("TRACE", "trying to get thing");
+	    try {
+	      URLConnection conn = url.openConnection();
+	      Log.i("TRACE", "opened connection");
+	      BufferedInputStream bin = new BufferedInputStream(conn.getInputStream());
+	      Log.i("TRACE", "got buffered stream");
+	      
+	      byte[] contentBytes = new byte[1024];
+	      int bytesRead = 0;
+	      StringBuffer responseBuffer = new StringBuffer();
+	      
+	      Log.i("TRACE", "starting to read data");
+	      while((bytesRead = bin.read(contentBytes)) != -1) {
+	        response = new String(contentBytes, 0, bytesRead);
+	        responseBuffer.append(response);
+	      }
+	      Log.i("TRACE", "done with data");
+	      return responseBuffer.toString();
+	    } catch (Exception e) {
+	      Log.e("URL RESPONSE ERROR", "Internet#get");
+	    }
+	    
+	    return response;
+	  }
+	  
+	  
+	  private class ZillowRequest extends AsyncTask<URL, Void, String> {
+	      @Override
+	      protected String doInBackground(URL...urls) {
+	        String response = "";
+	        for(URL url: urls) {
+	          // make the request
+	          response = PropertyActivity.get(url);
+	        }
+	        return response;
+	      }
+	      
+	      @Override
+	      protected void onPostExecute(String result) {
+	        Log.i("URL RESPONSE", result);
+	        
+	        Document doc = XMLfromString(result);
+	        NodeList nodes = doc.getElementsByTagName("zpid");
+	        String zpid = nodes.item(0).getTextContent();
+	        Log.i("ZILLOW", "ZPID: "+zpid);
+	        
+	        HomeDetailRequest hdr = new HomeDetailRequest();
+	      try {
+	        hdr.execute(new URL("http://www.zillow.com/webservice/GetUpdatedPropertyDetails.htm?zws-id=X1-ZWz1djyaxz82dn_86zet&zpid="+zpid));
+	      } catch (MalformedURLException e) {
+	        // TODO Auto-generated catch block
+	        e.printStackTrace();
+	      }
+	      }
+	    }
+	  
+	  private class HomeDetailRequest extends AsyncTask<URL, Void, String> {
+	      @Override
+	      protected String doInBackground(URL...urls) {
+	        String response = "";
+	        for(URL url: urls) {
+	          // make the request
+	          response = PropertyActivity.get(url);
+	        }
+	        return response;
+	      }
+	      
+	      @Override
+	      protected void onPostExecute(String result) {
+	        Log.i("URL RESPONSE", result);
+	        
+	        Document doc = XMLfromString(result);
+	        
+	        String bedrooms =  doc.getElementsByTagName("bedrooms").item(0).getTextContent();
+	        
+	        String bathrooms =  doc.getElementsByTagName("bathrooms").item(0).getTextContent();
+	        String sqft =  doc.getElementsByTagName("finishedSqFt").item(0).getTextContent();
+	        
+	        Log.i("ZILLOW", bedrooms);
+	        Log.i("ZILLOW", bathrooms);
+	        Log.i("ZILLOW", sqft);
+	        ((EditText) findViewById(R.id.property_bedrooms)).setText(bedrooms);
+	        ((EditText) findViewById(R.id.property_bathrooms)).setText(bathrooms);
+	        ((EditText) findViewById(R.id.property_sqft)).setText(sqft);
+	        
+	      }
+	    }
+	  
+	  public Document XMLfromString(String v){
+
+	        Document doc = null;
+
+	        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+	        try {
+
+	            DocumentBuilder db = dbf.newDocumentBuilder();
+
+	            InputSource is = new InputSource();
+	            is.setCharacterStream(new StringReader(v));
+	            doc = db.parse(is); 
+
+	        } catch (ParserConfigurationException e) {
+	            e.printStackTrace();
+	        } catch (SAXException e) {
+	            System.out.println("Wrong XML file structure: " + e.getMessage());
+	            return null;
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+
+	        return doc;
+
+	    }
 }

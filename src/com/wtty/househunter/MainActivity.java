@@ -1,12 +1,35 @@
 package com.wtty.househunter;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.ContentValues;
@@ -17,7 +40,10 @@ import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Message;
+import android.os.Messenger;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -34,6 +60,7 @@ public class MainActivity extends FragmentActivity implements
 		ActionBar.TabListener, PropertyListFragment.PropertyListener {
 	
 	Context _context;
+	Messenger _messenger;
 	String _where_clause;
 	String _order_clause = PropertyDB.KEY_ROWID+" DESC";
 	HashMap<String, String> _where_clauses = new HashMap<String, String>();
@@ -189,8 +216,16 @@ public class MainActivity extends FragmentActivity implements
 //			
 //			fragment = 	_flipFragment;
 //			break;
-			
+//			
 		default	:
+		
+//			try {
+//				SearchRequest sr = new SearchRequest();
+//				sr.execute(new URL("http://www.zillow.com/webservice/GetSearchResults.htm?zws-id=X1-ZWz1djyaxz82dn_86zet&address=3211+NW+89th+way&citystatezip=Coral%20Springs%2C+FL"));
+//			} catch (MalformedURLException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
 			fragment = new DummySectionFragment();
 			args.putInt(DummySectionFragment.ARG_SECTION_NUMBER,
 					tab.getPosition() + 1);
@@ -329,5 +364,7 @@ public class MainActivity extends FragmentActivity implements
 		    out.append(glue).append(s[x].toString());
 		  return out.toString();
 		}
-
+	
+	
+	
 }
